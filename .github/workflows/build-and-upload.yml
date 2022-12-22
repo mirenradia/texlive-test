@@ -1,0 +1,33 @@
+name: Build and upload document
+on: push
+jobs:
+  build:
+    name: Build and upload document
+    runs-on: ubuntu-latest
+    env:
+      BASENAME: main
+    container:
+      image: texlive/texlive:latest-full
+      env:
+        LATEXMK_OPTIONS: -pdf -interaction=nonstopmode -shell-escape
+        BASENAME: ${{ env.BASENAME }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Compile LaTeX source
+        run: latexmk $LATEXMK_OPTIONS ${BASENAME}.tex
+
+      - name: Upload PDF 
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ env.BASENAME }}
+          path: ${{ env.BASENAME }}.pdf
+      
+      - name: Upload logs (if failed)
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-logs
+          path: '*.log'
